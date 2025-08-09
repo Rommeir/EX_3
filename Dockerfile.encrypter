@@ -1,0 +1,31 @@
+# Dockerfile.encrypter
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies including OpenSSL
+RUN apt-get update && apt-get install -y \
+    gcc \
+    make \
+    libc6-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create mount point and log directory
+RUN mkdir -p /mnt/mta /var/log
+
+# Copy library .deb and install it
+COPY mta-utils-dev-x86_64.deb /tmp/
+RUN dpkg -i /tmp/mta-utils-dev-x86_64.deb || true
+RUN apt-get update && apt-get install -f -y
+
+# Copy source files
+COPY encrypter.c /app/
+COPY Makefile.encrypter /app/Makefile
+
+# Build the application
+WORKDIR /app
+RUN make
+
+# Run the app
+ENTRYPOINT ["./encrypter"]
